@@ -1,7 +1,10 @@
 import React from 'react'
+import Counter from './components/Counter'
 // import logo from './logo.svg'
 // import './App.css'
 import Article from './components/Article'
+import TextInput from './components/Textinput'
+import ToggleButton from './components/ToggleButton'
 
 function App() {
     // return (
@@ -25,8 +28,10 @@ function App() {
     //         </header>
     //     </div>
     // )
+
     return (
         <div>
+            {/* 第6回まで */}
             <Article
                 title="TSだと、暗黙的Anyは使えない"
                 content="だから、型を定義しておく必要があります"
@@ -35,6 +40,11 @@ function App() {
                 title="TypeScriptでの関数コンポーネント"
                 content="React.FC<型>を利用します。これにより破壊的オブジェクトを回避できます"
             />
+
+            {/* 第7回から */}
+            <TextInput />
+            <Counter />
+            <ToggleButton />
         </div>
     )
 }
