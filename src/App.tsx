@@ -1,9 +1,9 @@
-import React from 'react'
-import Counter from './components/Counter'
+import React, { useEffect, useState } from 'react'
 // import logo from './logo.svg'
 // import './App.css'
 import Article from './components/Article'
 import TextInput from './components/Textinput'
+import Counter from './components/Counter'
 import ToggleButton from './components/ToggleButton'
 
 function App() {
@@ -29,6 +29,42 @@ function App() {
     //     </div>
     // )
 
+    // useEffectのユースケース
+    const [name, setName] = useState('')
+    const [id, setId] = useState('Yuta-Abe')
+    // yuta-abeのIDは非公開だからnullですよ～
+    const ids = [
+        'Yuta-Abe',
+        'MerlinVR',
+        'aws',
+        'google',
+        'facebook',
+        'gaearon',
+        'deatiger',
+        'JUKI',
+        '1938',
+    ]
+    const getRandomID = () => {
+        const aid = ids[Math.floor(Math.random() * ids.length)]
+        setId(aid)
+    }
+
+    useEffect(() => {
+        // テンプレートリテラルで${id}にして変数を埋め込む
+        // fetchで指定アドレスからデータをとってくる
+        fetch(`https://api.github.com/users/${id}`)
+            .then((res) => res.json())
+            .then((data) => {
+                console.log(data)
+                setName(String(data.name))
+            })
+            .catch((error) => {
+                setId('a')
+                console.error(error)
+            })
+    }, [id])
+    // idが変更されるたびに実行される
+
     return (
         <div>
             {/* 第6回まで */}
@@ -45,6 +81,14 @@ function App() {
             <TextInput />
             <Counter />
             <ToggleButton />
+
+            {/* 第9回から */}
+            <p>
+                {id}の、GitHub上の名前は{name}です。
+            </p>
+            <button onClick={getRandomID} type="button">
+                IDを変更
+            </button>
         </div>
     )
 }
