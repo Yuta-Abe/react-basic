@@ -99,10 +99,14 @@
 import React from 'react'
 import defaultDataset from './dataset'
 import './assets/styles/style.css'
+import { AnswersList } from './components/index'
 
 // TS用に型を定義
 type State = {
-    answers: string[]
+    answers: {
+        content: string
+        nextId: string
+    }[]
     chats: string[]
     currentID: string
     dataset: typeof defaultDataset
@@ -125,13 +129,30 @@ export default class App extends React.Component<{}, State> {
         }
     }
 
+    // 副作用の処理
+    // render()が終わった後に走る処理
+    componentDidMount() {
+        this.initAnswer()
+    }
+
+    initAnswer = () => {
+        // initの受け渡し方が分からない
+        const initDataset = this.state.dataset.init
+        const initAnswers = initDataset.answers
+        this.setState({
+            answers: initAnswers,
+        })
+    }
+
     // クラスの場合はrender()が必要
     // どうしても must use destructuring props assignmenteslintreact を回避できなかったので無効化
     render() {
         return (
             <div>
                 <section className="c-section">
-                    <div className="c-box">{this.state.currentID}</div>
+                    <div className="c-box">
+                        <AnswersList answers={this.state.answers} />
+                    </div>
                 </section>
             </div>
         )
