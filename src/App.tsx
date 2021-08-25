@@ -2,6 +2,7 @@
 /* eslint-disable react/no-unused-state */
 /* eslint-disable react/destructuring-assignment */
 
+// react基礎編
 // import React, { useEffect, useState } from 'react'
 // // import logo from './logo.svg'
 // // import './App.css'
@@ -98,10 +99,12 @@
 // }
 
 // リアクト実践編
+
 import React from 'react'
 import defaultDataset from './dataset'
 import './assets/styles/style.css'
 import { AnswersList, Chats } from './components/index'
+import FormDialog from './components/Forms/FormDialog'
 
 // TS用に型を定義
 type State = {
@@ -133,6 +136,8 @@ export default class App extends React.Component<{}, State> {
             open: false,
         }
         this.selectAnswer = this.selectAnswer.bind(this)
+        this.handleClose = this.handleClose.bind(this)
+        this.handleClickOpen = this.handleClickOpen.bind(this)
     }
 
     // 副作用の処理
@@ -141,6 +146,14 @@ export default class App extends React.Component<{}, State> {
     componentDidMount() {
         const initAnswer = ''
         this.selectAnswer(initAnswer, this.state.currentID)
+    }
+
+    componentDidUpdate() {
+        // scroll要素をもつDomのIDをscrollAreaに入れる
+        const scrollArea = document.getElementById('scroll-area')
+        if (scrollArea) {
+            scrollArea.scrollTop = scrollArea.scrollHeight
+        }
     }
 
     displayNextQuestion = (nextQuestionId: string) => {
@@ -159,10 +172,31 @@ export default class App extends React.Component<{}, State> {
         })
     }
 
+    handleClickOpen = () => {
+        this.setState({ open: true })
+    }
+
+    handleClose = () => {
+        this.setState({ open: false })
+    }
+
     selectAnswer = (selectedAnswer: string, nextQuestionId: string) => {
         switch (true) {
             case nextQuestionId === 'init': {
-                this.displayNextQuestion(nextQuestionId)
+                setTimeout(() => this.displayNextQuestion(nextQuestionId), 500)
+                break
+            }
+            case nextQuestionId === 'contact': {
+                this.handleClickOpen()
+                break
+            }
+            // nextQuestionIdがhttps:から始まる文字列だったらの判定
+            case /^https:*/.test(nextQuestionId): {
+                // aタグを生成
+                const a = document.createElement('a')
+                a.href = nextQuestionId // aタグにリンクをコピー
+                a.target = '_blank' // 別タブでリンクを開く
+                a.click() // 自動的にクリックしてページに飛ぶ
                 break
             }
             default: {
@@ -176,7 +210,7 @@ export default class App extends React.Component<{}, State> {
                     chats,
                 })
 
-                this.displayNextQuestion(nextQuestionId)
+                setTimeout(() => this.displayNextQuestion(nextQuestionId), 1000)
                 break
             }
         }
@@ -193,6 +227,10 @@ export default class App extends React.Component<{}, State> {
                         <AnswersList
                             answers={this.state.answers}
                             select={this.selectAnswer}
+                        />
+                        <FormDialog
+                            open={this.state.open}
+                            handleClose={this.handleClose}
                         />
                     </div>
                 </section>

@@ -1,14 +1,22 @@
 import React from 'react'
 // MUIを使用
-// import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
+import { makeStyles, createStyles } from '@material-ui/core/styles'
 import Button from '@material-ui/core/Button'
 
-// MUIからコピペ
-// const useStyles = makeStyles((theme: Theme) =>
-//     createStyles({
-//         root: {},
-//     })
-// )
+const useStyles = makeStyles(() =>
+    createStyles({
+        button: {
+            borderColor: '#FFB549',
+            color: '#FFB459',
+            fontWeight: 600,
+            marginButtom: '8px',
+            '&:hover': {
+                backgroundColor: '#FFB549',
+                color: '#FFF',
+            },
+        },
+    })
+)
 
 type Props = {
     content: string
@@ -17,11 +25,11 @@ type Props = {
 }
 
 const Answer: React.FC<Props> = ({ content, nextID, select }) => {
-    // const classes = useStyles()
+    const classes = useStyles()
     return (
         <Button
-            variant="contained"
-            color="primary"
+            className={classes.button}
+            variant="outlined"
             onClick={() => select(content, nextID)}
         >
             {content}
