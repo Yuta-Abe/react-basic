@@ -1,4 +1,13 @@
-const defaultDataset = {
+// 連想配列にも型をつけておく必要がある
+// interfaceを使って連想配列の型を定義
+interface DefaultDataset {
+    [key: string]: {
+        answers: { content: string; nextId: string }[]
+        question: string
+    }
+}
+
+const defaultDataset: DefaultDataset = {
     init: {
         answers: [
             { content: '仕事を依頼したい', nextId: 'job_offer' },
@@ -12,7 +21,7 @@ const defaultDataset = {
             },
             { content: 'お付き合いしたい', nextId: 'dating' },
         ],
-        question: 'こんにちは！🐯トラハックへのご用件はなんでしょうか？',
+        question: 'こんにちは！yutabgtへのご用件はなんでしょうか？',
     },
     job_offer: {
         answers: [

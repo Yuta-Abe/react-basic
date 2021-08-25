@@ -9,7 +9,7 @@ type Props = {
 
 // 関数コンポーネント(React.FC {FunctionComponent} )を使用して、
 // Articleに型をアノテーションする。
-// このようにすることで、破壊的オブジェクトの警告を回避する
+// このようにすることで、must use destructuring state assignmenteslintreactの警告を回避する
 
 const Article: React.FC<Props> = ({ title, content }) => {
     // useStateメソッドで現在の状態と、状態を更新させるためのメソッドを取得

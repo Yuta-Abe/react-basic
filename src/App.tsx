@@ -1,5 +1,7 @@
+/* eslint-disable react/no-access-state-in-setstate */
 /* eslint-disable react/no-unused-state */
 /* eslint-disable react/destructuring-assignment */
+
 // import React, { useEffect, useState } from 'react'
 // // import logo from './logo.svg'
 // // import './App.css'
@@ -99,7 +101,7 @@
 import React from 'react'
 import defaultDataset from './dataset'
 import './assets/styles/style.css'
-import { AnswersList } from './components/index'
+import { AnswersList, Chats } from './components/index'
 
 // TS用に型を定義
 type State = {
@@ -107,7 +109,10 @@ type State = {
         content: string
         nextId: string
     }[]
-    chats: string[]
+    chats: {
+        text: string
+        type: string
+    }[]
     currentID: string
     dataset: typeof defaultDataset
     open: boolean
@@ -127,21 +132,54 @@ export default class App extends React.Component<{}, State> {
             dataset: defaultDataset,
             open: false,
         }
+        this.selectAnswer = this.selectAnswer.bind(this)
     }
 
     // 副作用の処理
     // render()が終わった後に走る処理
+    // よって、最初の処理とほぼ同じ
     componentDidMount() {
-        this.initAnswer()
+        const initAnswer = ''
+        this.selectAnswer(initAnswer, this.state.currentID)
     }
 
-    initAnswer = () => {
-        // initの受け渡し方が分からない
-        const initDataset = this.state.dataset.init
-        const initAnswers = initDataset.answers
-        this.setState({
-            answers: initAnswers,
+    displayNextQuestion = (nextQuestionId: string) => {
+        const { chats } = this.state
+        chats.push({
+            text: this.state.dataset[nextQuestionId].question,
+            type: 'question',
         })
+
+        // 通常、setState内でthis.stateを呼ぶと、古い情報のstateを参照してしまう可能性がある
+        // よって、コールバック関数でひとつ前の状態を取得する必要があるが、ここではそのまま記述
+        this.setState({
+            answers: this.state.dataset[nextQuestionId].answers,
+            chats,
+            currentID: nextQuestionId,
+        })
+    }
+
+    selectAnswer = (selectedAnswer: string, nextQuestionId: string) => {
+        switch (true) {
+            case nextQuestionId === 'init': {
+                this.displayNextQuestion(nextQuestionId)
+                break
+            }
+            default: {
+                const { chats } = this.state
+                chats.push({
+                    text: selectedAnswer,
+                    type: 'answer',
+                })
+
+                this.setState({
+                    chats,
+                })
+
+                this.displayNextQuestion(nextQuestionId)
+                break
+            }
+        }
     }
 
     // クラスの場合はrender()が必要
@@ -151,7 +189,11 @@ export default class App extends React.Component<{}, State> {
             <div>
                 <section className="c-section">
                     <div className="c-box">
-                        <AnswersList answers={this.state.answers} />
+                        <Chats chats={this.state.chats} />
+                        <AnswersList
+                            answers={this.state.answers}
+                            select={this.selectAnswer}
+                        />
                     </div>
                 </section>
             </div>
