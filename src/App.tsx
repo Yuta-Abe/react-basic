@@ -1,7 +1,3 @@
-/* eslint-disable react/no-access-state-in-setstate */
-/* eslint-disable react/no-unused-state */
-/* eslint-disable react/destructuring-assignment */
-
 // react基礎編
 // import React, { useEffect, useState } from 'react'
 // // import logo from './logo.svg'
@@ -100,94 +96,62 @@
 
 // リアクト実践編
 
-import React from 'react'
+import React, { FC, useEffect, useState, useCallback } from 'react'
 import defaultDataset from './dataset'
 import './assets/styles/style.css'
 import { AnswersList, Chats } from './components/index'
 import FormDialog from './components/Forms/FormDialog'
 
 // TS用に型を定義
-type State = {
-    answers: {
-        content: string
-        nextId: string
-    }[]
-    chats: {
-        text: string
-        type: string
-    }[]
-    currentID: string
-    dataset: typeof defaultDataset
-    open: boolean
+type Answer = {
+    content: string
+    nextId: string
+}
+type Chat = {
+    text: string
+    type: string
 }
 
-// クラスコンポーネントに変更
-// クラスコンポーネントの場合はジェネリックで型指定
-// 引数無しの型なら{}でOK
-export default class App extends React.Component<{}, State> {
-    // state: State
-    constructor(props: {}) {
-        super(props)
-        this.state = {
-            answers: [],
-            chats: [],
-            currentID: 'init',
-            dataset: defaultDataset,
-            open: false,
-        }
-        this.selectAnswer = this.selectAnswer.bind(this)
-        this.handleClose = this.handleClose.bind(this)
-        this.handleClickOpen = this.handleClickOpen.bind(this)
+const App: FC<{}> = () => {
+    // useStateを使用する際に型を決める
+    // プリミティブやすでに型が決まっているものは型推論に任せる
+    // オブジェクトの配列の型指定は型エイリアスでオブジェクトを
+    // 作成しておき、useStateでジェネリック型を使用して、
+    // オブジェクトの配列の型を指定しておく。初期値は空配列でもOK
+    // useState<T[]>([])
+    const [answers, setAnswers] = useState<Answer[]>([])
+    const [chats, setChats] = useState<Chat[]>([])
+    const [currentID, setCurrentID] = useState('init')
+    const [dataset, setDataset] = useState(defaultDataset)
+    const [open, setOpen] = useState(false)
+
+    const handleClickOpen = () => {
+        setOpen(true)
     }
 
-    // 副作用の処理
-    // render()が終わった後に走る処理
-    // よって、最初の処理とほぼ同じ
-    componentDidMount() {
-        const initAnswer = ''
-        this.selectAnswer(initAnswer, this.state.currentID)
+    const addChats = (chat: Chat) => {
+        setChats((prevChats) => {
+            return [...prevChats, chat] // 前回のChatsに対して今回のChatを追加する
+        })
     }
 
-    componentDidUpdate() {
-        // scroll要素をもつDomのIDをscrollAreaに入れる
-        const scrollArea = document.getElementById('scroll-area')
-        if (scrollArea) {
-            scrollArea.scrollTop = scrollArea.scrollHeight
-        }
-    }
-
-    displayNextQuestion = (nextQuestionId: string) => {
-        const { chats } = this.state
-        chats.push({
-            text: this.state.dataset[nextQuestionId].question,
+    const displayNextQuestion = (
+        nextQuestionId: string,
+        nextDataset: typeof defaultDataset
+    ) => {
+        addChats({
+            text: nextDataset[nextQuestionId].question,
             type: 'question',
         })
 
-        // 通常、setState内でthis.stateを呼ぶと、古い情報のstateを参照してしまう可能性がある
-        // よって、コールバック関数でひとつ前の状態を取得する必要があるが、ここではそのまま記述
-        this.setState({
-            answers: this.state.dataset[nextQuestionId].answers,
-            chats,
-            currentID: nextQuestionId,
-        })
+        setAnswers(nextDataset[nextQuestionId].answers)
+        setCurrentID(nextQuestionId)
     }
 
-    handleClickOpen = () => {
-        this.setState({ open: true })
-    }
-
-    handleClose = () => {
-        this.setState({ open: false })
-    }
-
-    selectAnswer = (selectedAnswer: string, nextQuestionId: string) => {
+    const selectAnswer = (selectedAnswer: string, nextQuestionId: string) => {
         switch (true) {
-            case nextQuestionId === 'init': {
-                setTimeout(() => this.displayNextQuestion(nextQuestionId), 500)
-                break
-            }
             case nextQuestionId === 'contact': {
-                this.handleClickOpen()
+                handleClickOpen()
                 break
             }
             // nextQuestionIdがhttps:から始まる文字列だったらの判定
@@ -200,41 +164,51 @@ export default class App extends React.Component<{}, State> {
                 break
             }
             default: {
-                const { chats } = this.state
-                chats.push({
+                addChats({
                     text: selectedAnswer,
                     type: 'answer',
                 })
-
-                this.setState({
-                    chats,
-                })
-
-                setTimeout(() => this.displayNextQuestion(nextQuestionId), 1000)
+                setTimeout(
+                    () => displayNextQuestion(nextQuestionId, dataset),
+                    1000
+                )
                 break
             }
         }
     }
 
-    // クラスの場合はrender()が必要
-    // どうしても must use destructuring props assignmenteslintreact を回避できなかったので無効化
-    render() {
-        return (
-            <div>
-                <section className="c-section">
-                    <div className="c-box">
-                        <Chats chats={this.state.chats} />
-                        <AnswersList
-                            answers={this.state.answers}
-                            select={this.selectAnswer}
-                        />
-                        <FormDialog
-                            open={this.state.open}
-                            handleClose={this.handleClose}
-                        />
-                    </div>
-                </section>
-            </div>
-        )
-    }
+    // Mount
+    useEffect(() => {
+        // const initAnswer = ''
+        // selectAnswer(initAnswer, currentID)
+        setDataset(dataset)
+        displayNextQuestion(currentID, dataset)
+    }, [])
+
+    // update
+    useEffect(() => {
+        // scroll要素をもつDomのIDをscrollAreaに入れる
+        const scrollArea = document.getElementById('scroll-area')
+        if (scrollArea) {
+            scrollArea.scrollTop = scrollArea.scrollHeight
+        }
+    })
+
+    const handleClose = useCallback(() => {
+        setOpen(false)
+    }, [setOpen])
+
+    return (
+        <div>
+            <section className="c-section">
+                <div className="c-box">
+                    <Chats chats={chats} />
+                    <AnswersList answers={answers} select={selectAnswer} />
+                    <FormDialog open={open} handleClose={handleClose} />
+                </div>
+            </section>
+        </div>
+    )
 }
+
+export default App

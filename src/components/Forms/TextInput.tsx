@@ -1,5 +1,4 @@
-import React from 'react'
-// import { createStyles, makeStyles, Theme } from '@material-ui/core/styles'
+import React, { ChangeEvent, FC } from 'react'
 import TextField from '@material-ui/core/TextField'
 
 type Props = {
@@ -8,10 +7,10 @@ type Props = {
     rows: number
     value: string
     type: string
-    onChange: (event: React.ChangeEvent) => void
+    onChange: (event: ChangeEvent<HTMLInputElement>) => void
 }
 
-const TextInput: React.FC<Props> = ({
+const TextInput: FC<Props> = ({
     label,
     multiline,
     rows,

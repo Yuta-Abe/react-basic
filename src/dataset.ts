@@ -1,8 +1,13 @@
 // 連想配列にも型をつけておく必要がある
-// interfaceを使って連想配列の型を定義
-interface DefaultDataset {
+// typeを使って連想配列の型を定義
+type Answer = {
+    content: string
+    nextId: string
+}
+
+type DefaultDataset = {
     [key: string]: {
-        answers: { content: string; nextId: string }[]
+        answers: Answer[]
         question: string
     }
 }
