@@ -1,18 +1,24 @@
 // 連想配列にも型をつけておく必要がある
 // typeを使って連想配列の型を定義
-type Answer = {
+
+// 何のstringなのか分かるようにするためにQuestionID型を作成する
+// また、nextIDとdatasetのキーが同じものであるということが分かるようになる?
+export type QuestionId = string
+
+export type Answer = {
     content: string
-    nextId: string
+    nextId: QuestionId
 }
 
-type DefaultDataset = {
-    [key: string]: {
-        answers: Answer[]
-        question: string
-    }
+export type DatasetRecord = {
+    answers: Answer[]
+    question: string
 }
 
-const defaultDataset: DefaultDataset = {
+// Recordを使用
+export type Dataset = Record<QuestionId, DatasetRecord>
+
+const defaultDataset: Dataset = {
     init: {
         answers: [
             { content: '仕事を依頼したい', nextId: 'job_offer' },

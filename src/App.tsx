@@ -96,84 +96,134 @@
 
 // リアクト実践編
 
-import React, { FC, useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import defaultDataset from './dataset'
+import type { Answer, Dataset, DatasetRecord } from './dataset'
 import './assets/styles/style.css'
-import { AnswersList, Chats } from './components/index'
+import { AnswerList, Chats } from './components/index'
 import FormDialog from './components/Forms/FormDialog'
 import { db } from './firebase/index'
 
-// TS用に型を定義
-type Answer = {
-    content: string
-    nextId: string
-}
-type Chat = {
-    text: string
-    type: string
-}
+// プロパティにtypeを持たせることで、recodeの型が自動的に決まる！
+// キーワード → 型システム、typeguard
+// 型設計的にはユーザが選んだ情報も含めて記録しておくことが大事
+type Chat =
+    // ユーザからの質問
+    | {
+          type: 'question'
+          text: string
+          record: Answer
+      }
+    // ボットの応答
+    | {
+          type: 'answer'
+          text: string
+          record: DatasetRecord
+      }
 
-const App: FC<{}> = () => {
-    // useStateを使用する際に型を決める
-    // プリミティブやすでに型が決まっているものは型推論に任せる
-    // オブジェクトの配列の型指定は型エイリアスでオブジェクトを
-    // 作成しておき、useStateでジェネリック型を使用して、
-    // オブジェクトの配列の型を指定しておく。初期値は空配列でもOK
-    // useState<T[]>([])
-    const [answers, setAnswers] = useState<Answer[]>([])
+const App = () => {
+    /**
+     * 状態管理に、一意的に求められるものを含んではいけない！
+     * キーワード → single source of truth
+     * Frontはユーザが好き勝手に操作できるので、厳守しないとデータが壊れる！
+     * 参考URL
+     * https://ja.reactjs.org/docs/forms.html#controlled-components
+     * https://ja.wikipedia.org/wiki/%E4%BF%A1%E9%A0%BC%E3%81%A7%E3%81%8D%E3%82%8B%E5%94%AF%E4%B8%80%E3%81%AE%E6%83%85%E5%A0%B1%E6%BA%90
+     *
+     */
     const [chats, setChats] = useState<Chat[]>([])
-    const [currentID, setCurrentID] = useState('init')
-    const [dataset, setDataset] = useState<typeof defaultDataset>({})
+    const [dataset, setDataset] = useState<Dataset>({})
     const [open, setOpen] = useState(false)
 
-    const handleClickOpen = () => {
-        setOpen(true)
-    }
+    // chatsから一番後ろの2つを抜き取る
+    // undefinedがあるのは、必ず２つ以上の配列を生成するようにするため
+    // 例えばchatsの中身が0個でもundefinedが２つの配列が生成される
+    // 生成された２つ以上の配列から２つ抜き出すことで、secondLastChatとlastChatが決まる！
+    const [secondLastChat, lastChat] = [
+        undefined,
+        undefined,
+        ...chats.slice(-2),
+    ].slice(-2)
 
-    const addChats = (chat: Chat) => {
-        setChats((prevChats) => {
-            return [...prevChats, chat] // 今までのChatsに対して今回のChatを追加する
-        })
-    }
+    // 選択肢を表す変数を定義。useMemoは見本で使ってみる
+    // メモはReactフレームワークのメモリ領域に今までのデータを記録する機能
+    // ここではsecondChatとlastChatが保存される
+    // この程度だとメモを使う恩恵は少なく、メモ化する方がコストが高くなるかも
+    // 通常の使い道は長い処理を行うとき等に使用する。
+    // そうすると、結果だけ記録してあるから、処理をすっ飛ばして回答が出せる。
 
-    const displayNextQuestion = (
-        nextQuestionId: string,
-        nextDataset: typeof defaultDataset
-    ) => {
-        addChats({
-            text: nextDataset[nextQuestionId].question,
-            type: 'question',
-        })
+    const { nextAnswers, executable } = useMemo(() => {
+        if (lastChat && lastChat.type === 'answer') {
+            return {
+                nextAnswers: lastChat.record.answers,
+                executable: true,
+            }
+        }
+        if (secondLastChat && secondLastChat.type === 'answer') {
+            return {
+                nextAnswers: secondLastChat.record.answers,
+                executable: false,
+            }
+        }
+        return {
+            nextAnswers: undefined,
+            executable: false,
+        }
+    }, [secondLastChat, lastChat])
 
-        setAnswers(nextDataset[nextQuestionId].answers)
-        setCurrentID(nextQuestionId)
-    }
-
-    const selectAnswer = (selectedAnswer: string, nextQuestionId: string) => {
+    const selectedAnswer = (question: Answer) => {
+        if (!executable) {
+            return
+        }
+        // TODO: switchの中身を変更する
         switch (true) {
-            case nextQuestionId === 'contact': {
-                handleClickOpen()
+            case question.nextId === 'contact': {
+                setOpen(true)
                 break
             }
             // nextQuestionIdがhttps:から始まる文字列だったらの判定
-            case /^https:*/.test(nextQuestionId): {
-                // aタグを生成
-                const a = document.createElement('a')
-                a.href = nextQuestionId // aタグにリンクをコピー
-                a.target = '_blank' // 別タブでリンクを開く
-                a.click() // 自動的にクリックしてページに飛ぶ
+            // 普通はIdにURLを仕込まない。datasetの修正が必要
+            case /^https:*/.test(question.nextId): {
+                window.open(question.nextId, '_blank', 'noreferrer')
                 break
             }
             default: {
-                addChats({
-                    text: selectedAnswer,
-                    type: 'answer',
-                })
-                setTimeout(
-                    () => displayNextQuestion(nextQuestionId, dataset),
-                    1000
-                )
-                break
+                setChats([
+                    ...chats,
+                    {
+                        type: 'question',
+                        text: question.content,
+                        record: question,
+                    },
+                ])
+                setTimeout(() => {
+                    setChats((newChats) => [
+                        ...newChats,
+                        {
+                            type: 'answer',
+                            text: dataset[question.nextId].question,
+                            record: dataset[question.nextId],
+                        },
+                    ])
+                    // タイマーを使用しているため、ここでアクセスできるchatsは過去のものになっている。
+                    // 上のコードはつまり下のようにしても同じように動く。
+                    // 一般的な例として、間に非同期処理を挟んだ場合は、他のアクションによりデータが更新されたかどうか、
+                    // チェックしなければならないケースが多いことを覚えておいてほしい。
+                    // その場合、引数のstate（新）と、useStateの戻り値（旧state）を比較する。
+                    // setChats([
+                    //     ...chats,
+                    //     {
+                    //         type: 'question',
+                    //         text: question.content,
+                    //         record: question,
+                    //     },
+                    //     {
+                    //         type: 'answer',
+                    //         text: dataset[question.nextId].question,
+                    //         record: dataset[question.nextId]
+                    //     }
+                    // ])
+                }, 1000)
             }
         }
     }
@@ -195,8 +245,16 @@ const App: FC<{}> = () => {
                 })
             const idset = initDataset as typeof defaultDataset
             setDataset(idset)
-            displayNextQuestion(currentID, idset)
+            setChats([
+                {
+                    type: 'answer',
+                    text: defaultDataset?.init?.question ?? '',
+                    record: defaultDataset.init,
+                },
+            ])
         })()
+        // datasetとsetDatasetは初期のみ
+        // 条件は必ず明記する！！初回でも空配列は禁止！！
     }, [])
 
     // update
@@ -206,18 +264,30 @@ const App: FC<{}> = () => {
         if (scrollArea) {
             scrollArea.scrollTop = scrollArea.scrollHeight
         }
-    })
+        // chatリストが更新されるたびによばれると明記
+        // 空はだめ！必ず何か入れること
+    }, [chats])
 
-    const handleClose = useCallback(() => {
+    // 普通、useCallbackはReact.memoを一緒に使うことで初めて威力を出すもの
+    // useCallbackで関数が無駄に生成されるのを防ぎ、
+    // useMemoで処理結果を省くようにする
+    // つまり、これくらいだとuseCallbackコスト高
+    const handleClose = () => {
         setOpen(false)
-    }, [setOpen])
+    }
 
     return (
         <div>
             <section className="c-section">
                 <div className="c-box">
                     <Chats chats={chats} />
-                    <AnswersList answers={answers} select={selectAnswer} />
+                    {nextAnswers ? (
+                        <AnswerList
+                            answers={nextAnswers}
+                            select={selectedAnswer}
+                            executable={executable}
+                        />
+                    ) : undefined}
                     <FormDialog open={open} handleClose={handleClose} />
                 </div>
             </section>

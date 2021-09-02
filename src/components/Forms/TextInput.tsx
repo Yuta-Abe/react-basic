@@ -18,10 +18,10 @@ const TextInput: FC<Props> = ({
     type,
     onChange,
 }) => {
+    // id属性は入れないこと！！
     return (
         <TextField
             fullWidth
-            id="standard-basic"
             label={label}
             margin="dense"
             multiline={multiline}

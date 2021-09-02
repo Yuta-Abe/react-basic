@@ -77,6 +77,11 @@ const FormDialog: FC<Props> = ({ open, handleClose }) => {
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
         >
+            {/*
+            TODO: SPAではなるべくid使わない。aria-labelledbyとリンクさせたい?のだろうけど、aria-labelを使うべきと思われる
+            どうしてもid使うならidをランダムに動的に発行して、useStateとかで持っておくのがいいかと思う。
+            あと、aria-describedbyに関しては参照すべきidすらない。
+          */}
             <DialogTitle id="alert-dialog-title">
                 ここがダイアログのタイトル
             </DialogTitle>

@@ -17,7 +17,7 @@ const useStyles = makeStyles(() =>
 type Props = {
     chats: {
         text: string
-        type: string
+        type: 'answer' | 'question'
     }[]
 }
 

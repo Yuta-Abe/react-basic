@@ -7,20 +7,21 @@ import Me from '../assets/img/775c7c6a-a699-4156-a8bf-cc16b90ed66c_LI (2).jpg'
 
 type Props = {
     text: string
-    type: string
+    // 型をUnionで厳密にすること！！
+    type: 'question' | 'answer'
 }
 
-const Chat: React.FC<Props> = ({ text, type }) => {
-    const isQuestion = type === 'question'
-    const classes = isQuestion ? 'p-chat__row' : 'p-chat__reverse'
+const Chat = ({ text, type }: Props) => {
+    const isAnswer = type === 'answer'
+    const classes = isAnswer ? 'p-chat__row' : 'p-chat__reverse'
 
     return (
         <ListItem className={classes}>
             <ListItemAvatar>
-                {isQuestion ? (
-                    <Avatar alt="Icon" src={Me} />
-                ) : (
+                {isAnswer ? (
                     <Avatar alt="Icon" src={NoProfile} />
+                ) : (
+                    <Avatar alt="Icon" src={Me} />
                 )}
             </ListItemAvatar>
             <div className="p-chat__bubble">{text}</div>

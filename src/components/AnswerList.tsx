@@ -6,10 +6,11 @@ type Props = {
         content: string
         nextId: string
     }[]
-    select: (selectedAnswer: string, nextQuestionId: string) => void
+    executable: boolean
+    select: (param: { content: string; nextId: string }) => void
 }
 
-const AnswersList: React.FC<Props> = ({ answers, select }) => {
+const AnswerList = ({ answers, select, executable = true }: Props) => {
     return (
         <div className="c-grid__answer">
             {/* mapで繰り返し */}
@@ -18,9 +19,10 @@ const AnswersList: React.FC<Props> = ({ answers, select }) => {
                 return (
                     <Answer
                         content={value.content}
-                        nextID={value.nextId}
+                        nextId={value.nextId}
+                        disabled={!executable}
                         key={index.toString()}
-                        select={select}
+                        select={() => select(value)}
                     />
                 )
             })}
@@ -28,4 +30,4 @@ const AnswersList: React.FC<Props> = ({ answers, select }) => {
     )
 }
 
-export default AnswersList
+export default AnswerList

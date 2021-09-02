@@ -3,6 +3,18 @@ import React from 'react'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import Button from '@material-ui/core/Button'
 
+type Props = {
+    content: string
+    // nextIDは持たない方がよい
+    nextId: string
+    disabled: boolean
+    // 不要にできる。onClickを引数にとるように実装する
+    select: (selectedAnswer: string, nextQuestionId: string) => void
+}
+
+// 使い方が微妙
+// 何かライブラリ等を使う場合は公式をチェックすること！！
+// https://material-ui.com/ja/customization/palette/
 const useStyles = makeStyles(() =>
     createStyles({
         button: {
@@ -18,19 +30,22 @@ const useStyles = makeStyles(() =>
     })
 )
 
-type Props = {
-    content: string
-    nextID: string
-    select: (selectedAnswer: string, nextQuestionId: string) => void
-}
-
-const Answer: React.FC<Props> = ({ content, nextID, select }) => {
+// Propsにはデフォルト値を設定すること！！
+const Answer = ({
+    content = '',
+    nextId = '',
+    select = () => {},
+    disabled = false,
+}: Props) => {
     const classes = useStyles()
     return (
         <Button
-            className={classes.button}
+            type="button"
             variant="outlined"
-            onClick={() => select(content, nextID)}
+            className={classes.button}
+            color="primary"
+            disabled={disabled}
+            onClick={() => select(content, nextId)}
         >
             {content}
         </Button>
