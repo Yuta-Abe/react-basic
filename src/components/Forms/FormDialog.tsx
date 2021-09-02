@@ -52,8 +52,7 @@ const FormDialog: FC<Props> = ({ open, handleClose }) => {
         // 注意、普通、フロント側に公開してはいけないURLやトークンを書いてはいけません
         // 今回は個人利用のSlackに送っているため、ここに記述しますが、Githubに上げるたびにURLが変更されてしまいます
         // 普通、バックエンド側（API側）に仕込ませておいて他人に読み取られないようにしておくことが重要です。
-        const url =
-            'https://hooks.slack.com/services/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'
+        const url = 'URLをいれる'
 
         fetch(url, {
             method: 'POST',

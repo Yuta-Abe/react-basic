@@ -101,6 +101,7 @@ import defaultDataset from './dataset'
 import './assets/styles/style.css'
 import { AnswersList, Chats } from './components/index'
 import FormDialog from './components/Forms/FormDialog'
+import { db } from './firebase/index'
 
 // TS用に型を定義
 type Answer = {
@@ -122,7 +123,7 @@ const App: FC<{}> = () => {
     const [answers, setAnswers] = useState<Answer[]>([])
     const [chats, setChats] = useState<Chat[]>([])
     const [currentID, setCurrentID] = useState('init')
-    const [dataset, setDataset] = useState(defaultDataset)
+    const [dataset, setDataset] = useState<typeof defaultDataset>({})
     const [open, setOpen] = useState(false)
 
     const handleClickOpen = () => {
@@ -131,7 +132,7 @@ const App: FC<{}> = () => {
 
     const addChats = (chat: Chat) => {
         setChats((prevChats) => {
-            return [...prevChats, chat] // 前回のChatsに対して今回のChatを追加する
+            return [...prevChats, chat] // 今までのChatsに対して今回のChatを追加する
         })
     }
 
@@ -179,10 +180,23 @@ const App: FC<{}> = () => {
 
     // Mount
     useEffect(() => {
-        // const initAnswer = ''
-        // selectAnswer(initAnswer, currentID)
-        setDataset(dataset)
-        displayNextQuestion(currentID, dataset)
+        ;(async () => {
+            // クラウドからデータを受け取る場合は型が不明でどうすればよいかわからない…
+            const initDataset: any = {}
+            await db
+                .collection('questions')
+                .get()
+                .then((snapshots) => {
+                    snapshots.forEach((doc) => {
+                        const { id } = doc
+                        const data = doc.data()
+                        initDataset[id] = data
+                    })
+                })
+            const idset = initDataset as typeof defaultDataset
+            setDataset(idset)
+            displayNextQuestion(currentID, idset)
+        })()
     }, [])
 
     // update
